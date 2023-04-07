@@ -1,0 +1,70 @@
+service: aws-node-api
+frameworkVersion: '3'
+
+plugins:
+ - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-2
+  
+  # create permissions for dynamodb
+  iam:
+    role:
+      statements:
+      - Effect: Allow
+        Resource: 
+        - arn:aws:dynamodb:us-east-2:338493361144:table/ProductServerlessChallenge
+        Action:
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:GetItem
+        - dynamodb:scan
+
+
+resources:
+  Resources:
+    # create a dynamoDB table
+    ItemTableServerless:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ProductServerlessChallenge
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S # S -> String
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+functions:
+  api:
+    handler: src/index.handler
+    events:
+      - httpApi:
+          path: /
+          method: get
+  insertProduct:
+    handler: src/rest/products/insert.handler
+    events:
+      - httpApi:
+          path: /products
+          method: post
+  updateProduct:
+    handler: src/rest/products/update.handler
+    events:
+      - httpApi:
+          path: /products/{id}
+          method: put
+  fetchProductById:
+    handler: src/rest/products/fetchById.handler
+    events:
+      - httpApi:
+          path: /products/{id}
+          method: get
+  fetchAllProducts:
+    handler: src/rest/products/fetchAll.handler
+    events:
+      - httpApi:
+          path: /products
+          method: get
